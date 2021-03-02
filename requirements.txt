@@ -1,0 +1,6 @@
+matplotlib==3.3.3
+numpy==1.19.4
+hyperopt==0.2.5
+torch==1.7.1
+pandas==1.2.3
+streamlit==0.77.0
