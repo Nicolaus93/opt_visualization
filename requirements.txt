@@ -2,4 +2,4 @@ plotly==4.14.3
 numpy==1.19.4
 streamlit==0.77.0
 matplotlib==3.3.3
-https://anaconda.org/conda-forge/pytorch-cpu/1.7.1/download/linux-64/pytorch-cpu-1.7.1-cpu_py36h718b53a_2.tar.bz2
+conda install pytorch==1.6.0 torchvision==0.7.0 cpuonly -c pytorch
