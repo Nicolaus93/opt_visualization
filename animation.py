@@ -197,9 +197,6 @@ def main():
             content = f.readlines()
             st.code(''.join(content))
     elif app_mode == "Run optimizers":
-        # description.empty()
-        # im2.empty()
-        # im1.write("Choose the options on the left.")
         st.write("Choose the options on the left.")
         function, selected_algo, selected_learning_rate, iterations = frame_selector_ui()
         if st.sidebar.button('Run!'):
