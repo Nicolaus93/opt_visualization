@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import math
 
 
@@ -9,9 +11,10 @@ def convex_f(tensor):
     return abs(x - 10)
 
 
-def rastrigin(tensor, lib=torch):
+def rastrigin(tensor):
     # https://en.wikipedia.org/wiki/Test_functions_for_optimization
     x, y = tensor
+    lib = torch if type(x) == torch.Tensor else np
     A = 10
     f = (
         A * 2
@@ -25,6 +28,18 @@ def rosenbrock(tensor):
     # https://en.wikipedia.org/wiki/Test_functions_for_optimization
     x, y = tensor
     return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
+
+
+def coherent(tensor):
+    x, y = tensor
+    r = np.sqrt(x**2 + y**2)
+    theta = np.arctan2(y, x)
+    return (3 + np.sin(5 * theta) + np.cos(3 * theta)) * r**2 * (5 / 3 - r)
+
+
+def weakly_coherent(tensor):
+    x1, x2 = tensor
+    return x1**2 * x2**2
 
 
 def plot_rosenbrock(show=False):
@@ -49,7 +64,7 @@ def plot_rastrigin(show=False):
     y = np.linspace(-4.5, 4.5, 250)
     minimum = (0, 0)
     X, Y = np.meshgrid(x, y)
-    Z = rastrigin([X, Y], lib=np)
+    Z = rastrigin([X, Y])
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(1, 1, 1)
     ax.contour(X, Y, Z, 20, cmap='jet')

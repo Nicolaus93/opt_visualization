@@ -4,10 +4,13 @@ import matplotlib.animation as animation
 import streamlit as st
 import streamlit.components.v1 as components
 import torch
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from coin_betting import Cocob
 from magdir import Magdir
 from mirror_descent import MirrorDescent
 from regralizer import Regralizer
+from recursive import Recursive
 from utils import *
 
 plt.style.use('seaborn-white')
@@ -37,12 +40,8 @@ def execute_steps(func, initial_state, optimizer_class, optimizer_config, num_it
     Run the optimizer.
     """
     x = torch.Tensor(initial_state).requires_grad_(True)
-    if optimizer_class == Cocob:
-        # x = torch.Tensor([0, 0]).requires_grad_(True)
-        # optimizer = optimizer_class([x], eps=optimizer_config['lr'])
-        optimizer = optimizer_class([x], eps=1.6)
-    elif optimizer_class == Magdir:
-        optimizer = optimizer_class([x], eps=1)
+    if optimizer_class in [Cocob, Magdir, Recursive]:
+        optimizer = optimizer_class([x], eps=optimizer_config["lr"])
     elif optimizer_class == MirrorDescent:
         optimizer = optimizer_class([x], diam=optimizer_config['lr'])
     elif optimizer_class == Regralizer:
@@ -74,12 +73,12 @@ def frame_selector_ui():
 
     # The user can pick which type of object to search for.
     algo = st.sidebar.selectbox(
-        "Which algo?", ["SGD", "Adam", "Cocob", "Adagrad", "Magdir", "Mirror Descent", "Regralizer"], 2)
+        "Which algo?", ["SGD", "Adam", "Cocob", "Adagrad", "Magdir", "Mirror Descent", "Regralizer", "Recursive"], 0)
 
-    if algo in ['Cocob', 'Magdir']:
+    if algo in ["Cocob", "Magdir", "Recursive"]:
         # Choose initial wealth
         param = st.sidebar.slider(
-            "Choose initial wealth:", 0.1, 1.5, value=0.1, step=0.1)
+            "Choose initial wealth:", 0.1, 10.0, step=0.1)
     elif algo is 'Mirror Descent':
         param = st.sidebar.slider(
             "Choose diameter:", 0.1, 10.0, step=0.1)
@@ -89,17 +88,74 @@ def frame_selector_ui():
 
     return fun, algo, param, iterations
 
+@st.cache(suppress_st_warning=True)
+def plotly_rastrigin():
+    x = np.linspace(-4.5, 4.5, 250)
+    y = np.linspace(-4.5, 4.5, 250)
+    X, Y = np.meshgrid(x, y)
+    Z = rastrigin([X, Y])
+    fig = make_subplots(rows=1, cols=1, specs=[[{'is_3d': True}]],
+                        subplot_titles=["Rastrigin function"])
+    fig.add_trace(go.Surface(x=X, y=Y, z=Z), 1, 1)
+    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+                      highlightcolor="limegreen", project_z=True))
+    fig.update_layout(autosize=False, width=800, height=800)
+    return fig
+
+@st.cache(suppress_st_warning=True)
+def plotly_rosenbrock():
+    x = np.linspace(-2, 2, 250)
+    y = np.linspace(-1, 3, 250)
+    X, Y = np.meshgrid(x, y)
+    Z = rosenbrock([X, Y])
+    fig = make_subplots(rows=1, cols=1, specs=[[{'is_3d': True}]],
+                        subplot_titles=["Rosenbrock function"])
+    fig.add_trace(go.Surface(x=X, y=Y, z=Z), 1, 1)
+    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+                      highlightcolor="limegreen", project_z=True))
+    fig.update_layout(autosize=False, width=800, height=800)
+    return fig
+
+@st.cache(suppress_st_warning=True)
+def plotly_coherent():
+    x = np.linspace(-1.5, 1.5, 250)
+    y = np.linspace(-1.5, 1.5, 250)
+    X, Y = np.meshgrid(x, y)
+    Z = coherent([X, Y])
+    fig = make_subplots(rows=1, cols=1, specs=[[{'is_3d': True}]],
+                        subplot_titles=["Coherent function"])
+    fig.add_trace(go.Surface(x=X, y=Y, z=Z), 1, 1)
+    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+                      highlightcolor="limegreen", project_z=True),
+                      showlegend=False)
+    fig.update_layout(autosize=False, width=800, height=800)
+    return fig
+
+@st.cache(suppress_st_warning=True)
+def plotly_weakly_coherent():
+    x = np.linspace(-1, 1, 250)
+    y = np.linspace(-1, 1, 250)
+    X, Y = np.meshgrid(x, y)
+    Z = weakly_coherent([X, Y])
+    fig = go.Figure(data=[go.Surface(z=Z)])
+    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+                      highlightcolor="limegreen", project_z=True),
+                      showlegend=False)
+    fig.update_layout(title="Weakly coherent function",
+                      autosize=False, width=700, height=700)
+    return fig
+
 
 def main():
     st.title("Visualize Optimizers in 1d")
-    description = st.markdown(
-        "In this app we run some optimizers on nasty functions like these ones:")
+    # description = st.markdown(
+    #     "In this app we run some optimizers on nasty functions like those below:")
 
-    # load image of rosenbrock function
-    rosenbrock_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Rosenbrock_function.svg/1200px-Rosenbrock_function.svg.png'
-    rastrigin_url = 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Rastrigin_function.png'
-    im1 = st.image(rosenbrock_url, caption='Rosenbrock function', use_column_width=True)
-    im2 = st.image(rastrigin_url, caption='Rastrigin function', use_column_width=True)
+    # # load image of rosenbrock function
+    # rosenbrock_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Rosenbrock_function.svg/1200px-Rosenbrock_function.svg.png'
+    # rastrigin_url = 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Rastrigin_function.png'
+    # im1 = st.image(rosenbrock_url, caption='Rosenbrock function', use_column_width=True)
+    # im2 = st.image(rastrigin_url, caption='Rastrigin function', use_column_width=True)
 
     # col1, col2 = st.beta_columns(2)
     # with col1:
@@ -113,21 +169,44 @@ def main():
         "Choose the app mode", ["Show instructions", "Run optimizers", "Show the source code"])
     if app_mode == "Show instructions":
         st.sidebar.success('To continue select "Run optimizers".')
+        description = st.markdown(
+        "In this app we run some optimizers on nasty functions like those below:")
+        # rastrigin
+        im1 = st.empty()
+        fig = plotly_rastrigin()
+        im1.write(fig)
+
+        # rosenbrock
+        im2 = st.empty()
+        fig = plotly_rosenbrock()
+        im2.write(fig)
+
+        # coherent
+        im3 = st.empty()
+        fig = plotly_coherent()
+        im3.write(fig)
+
+        # coherent
+        im4 = st.empty()
+        fig = plotly_weakly_coherent()
+        im4.write(fig)
+
     elif app_mode == "Show the source code":
-        description.empty()
-        # image.empty()
-        im1.empty()
-        im2.empty()
+        # description.empty()
         with open("animation.py") as f:
             content = f.readlines()
             st.code(''.join(content))
     elif app_mode == "Run optimizers":
+        # description.empty()
+        # im2.empty()
+        # im1.write("Choose the options on the left.")
+        st.write("Choose the options on the left.")
         function, selected_algo, selected_learning_rate, iterations = frame_selector_ui()
         if st.sidebar.button('Run!'):
-            description.empty()
-            # image.empty()
-            im1.empty()
-            im2.empty()
+            # description.empty()
+            # # image.empty()
+            # im1.empty()
+            # im2.empty()
             run_the_app(function, selected_algo, selected_learning_rate, iterations)
 
 
@@ -149,7 +228,8 @@ def run_the_app(function, selected_algo, selected_learning_rate, iterations):
 
     optimizers = {'Cocob': Cocob, 'SGD': torch.optim.SGD, 'Adam': torch.optim.Adam,
                   'Adagrad': torch.optim.Adagrad, 'Magdir': Magdir,
-                  'Mirror Descent': MirrorDescent, 'Regralizer': Regralizer}
+                  'Mirror Descent': MirrorDescent, 'Regralizer': Regralizer,
+                  "Recursive": Recursive}
     functions = {'Rosenbrock': rosenbrock, 'Rastrigin': rastrigin}
 
     # run algo
