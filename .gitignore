@@ -1,3 +1,5 @@
 *.png
 experiment.py
+random_stuff.py
 *.html
+__pycache__/*
