@@ -65,7 +65,7 @@ def frame_selector_ui():
 
     fun = st.sidebar.radio(
         "Function to optimize:",
-        ("Rosenbrock", "Rastrigin"),
+        ("Rosenbrock", "Rastrigin", "Coherent 1", "Coherent 2"),
     )
 
     iterations = st.sidebar.slider(
@@ -157,39 +157,30 @@ def main():
     # im1 = st.image(rosenbrock_url, caption='Rosenbrock function', use_column_width=True)
     # im2 = st.image(rastrigin_url, caption='Rastrigin function', use_column_width=True)
 
-    # col1, col2 = st.beta_columns(2)
-    # with col1:
-    #     im1 = st.image(rosenbrock_url, caption='Rosenbrock function', use_column_width=True)
-    # with col2:
-    #     im2 = st.image(rastrigin_url, caption='Rastrigin function', use_column_width=True)
-
     # Add a selector for the app mode on the sidebar.
-    st.sidebar.title("What to do:")
+    st.sidebar.title("Command line:")
     app_mode = st.sidebar.selectbox(
         "Choose the app mode", ["Show instructions", "Run optimizers", "Show the source code"])
     if app_mode == "Show instructions":
-        st.sidebar.success('To continue select "Run optimizers".')
         description = st.markdown(
-        "In this app we run some optimizers on nasty functions like those below:")
-        # rastrigin
-        im1 = st.empty()
-        fig = plotly_rastrigin()
-        im1.write(fig)
+        "In this app we run some optimizers on nasty functions.\n To visualize the possible functions please use the buttons on the left.")
+        st.sidebar.success('To continue select "Run optimizers".')
 
-        # rosenbrock
-        im2 = st.empty()
-        fig = plotly_rosenbrock()
-        im2.write(fig)
+        images = {
+            "Rastrigin": plotly_rastrigin(),
+            "Rosenbrock": plotly_rosenbrock(),
+            "Coherent 1": plotly_coherent(),
+            "Coherent 2": plotly_weakly_coherent()
+        }
 
-        # coherent
-        im3 = st.empty()
-        fig = plotly_coherent()
-        im3.write(fig)
+        fun = st.sidebar.radio(
+            "Function:",
+            ("Rosenbrock", "Rastrigin", "Coherent 1", "Coherent 2"),
+        )
 
-        # coherent
-        im4 = st.empty()
-        fig = plotly_weakly_coherent()
-        im4.write(fig)
+        im = st.empty()
+        fig = images[fun]
+        im.write(fig)
 
     elif app_mode == "Show the source code":
         # description.empty()
@@ -215,9 +206,20 @@ def run_the_app(function, selected_algo, selected_learning_rate, iterations):
     if function == 'Rosenbrock':
         fig, ax = plot_rosenbrock()
         initial_state = (-2.0, 2.0)
-    else:
+    elif function == "Rastrigin":
         fig, ax = plot_rastrigin()
         initial_state = (-2.0, 3.5)
+    elif function == "Coherent 1":
+        fig, ax = plot_coherent()
+        # initial_state = (0.9, 0.3)
+        # initial_state = (-0.6, -0.9)
+        initial_state = (-0.15, 1.1)
+    elif function == "Coherent 2":
+        fig, ax = plot_weakly_coherent()
+        initial_state = (1, 1)
+    else:
+        st.error("Please select a different function.")
+        return
 
     if selected_algo is None:
         st.error("Please select a different algorithm.")
@@ -227,7 +229,8 @@ def run_the_app(function, selected_algo, selected_learning_rate, iterations):
                   'Adagrad': torch.optim.Adagrad, 'Magdir': Magdir,
                   'Mirror Descent': MirrorDescent, 'Regralizer': Regralizer,
                   "Recursive": Recursive}
-    functions = {'Rosenbrock': rosenbrock, 'Rastrigin': rastrigin}
+    functions = {'Rosenbrock': rosenbrock, 'Rastrigin': rastrigin, "Coherent 1": coherent,
+                 "Coherent 2": weakly_coherent}
 
     # run algo
     algorithm = optimizers[selected_algo]
