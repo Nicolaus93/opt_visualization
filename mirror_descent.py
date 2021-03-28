@@ -35,21 +35,12 @@ class MirrorDescent(Optimizer):
                         state['Lambda'] = 1
 
                     Lambda = state['Lambda']
-                    try:
-                        gt_xt = torch.dot(grad, p.data)
-                        xt = p.data  # check here
-                        p.data.add_(-grad, alpha= 1 / Lambda)
-                        gt_xtp1 = torch.dot(grad, p.data)
-                        Lambda += (gt_xt - gt_xtp1 - Lambda * torch.dot(xt - p.data, xt - p.data)).item()
-                        state['Lambda'] = Lambda
-                    except RuntimeError:
-                        # 1d case
-                        gt_xt = torch.squeeze(grad) * torch.squeeze(p.data)
-                        xt = p.data  # check here
-                        p.data.add_(-grad, alpha= 1 / Lambda)
-                        gt_xtp1 = torch.squeeze(grad) * torch.squeeze(p.data)
-                        Lambda += (gt_xt - gt_xtp1 - Lambda * (xt - p.data) * (xt - p.data)).item()
-                        state['Lambda'] = Lambda
+                    gt_xt = grad @ p.data
+                    xt = p.data
+                    p.data.add_(-grad, alpha=1 / Lambda)
+                    gt_xtp1 = grad @ p.data
+                    Lambda += (gt_xt - gt_xtp1 - Lambda * (xt - p.data) @ (xt - p.data)).item()
+                    state['Lambda'] = Lambda
 
                 else:
                     if len(state) == 0:

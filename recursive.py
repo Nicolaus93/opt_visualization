@@ -119,30 +119,22 @@ class Recursive(Optimizer):
             inner = group['inner']
 
             for p in group['params']:
-                # if p.grad is None:
-                #     continue
 
                 grad = p.grad if grad is None else grad
                 state = self.state[p]
                 if len(state) == 0:
                     init = (torch.ones_like(p) * eps).requires_grad_(True)
                     state["inner_algo"] = inner(init)
-                    state["wealth"] = torch.ones_like(p) * eps
+                    state["wealth"] = eps
 
                 inner_algo = state["inner_algo"]
                 wealth = state["wealth"]
 
-                try:
-                    wealth.add_(-torch.dot(grad, p.data))
-                    v_t = inner_algo.get_output()
-                    z_t = grad / (1 - torch.dot(grad, v_t))
-                    v_t = inner_algo.step(z_t)
-                except RuntimeError:
-                    # 1d case
-                    wealth.add_(-torch.squeeze(grad) * torch.squeeze(p.data))
-                    v_t = inner_algo.get_output()
-                    z_t = grad / (1 - torch.squeeze(grad) * torch.squeeze(v_t))
-                    v_t = inner_algo.step(z_t)
+                # update
+                wealth -= grad @ p.data
+                v_t = inner_algo.get_output()
+                z_t = grad / (1 - grad @ v_t)
+                v_t = inner_algo.step(z_t)
 
                 p.data = wealth * v_t
                 state["wealth"] = wealth
